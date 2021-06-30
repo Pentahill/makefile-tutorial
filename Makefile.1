@@ -1,0 +1,28 @@
+GO := go
+
+.PHONY: all
+all: lint
+
+## lint: Check syntax and styling of go sources.
+.PHONY: lint
+lint:
+	@$(MAKE) go.lint
+
+.PHONY: go.lint
+go.lint: tools.verify.golangci-lint
+	@echo "===========> Run golangci to lint source codes"
+	@golangci-lint run
+
+tools.verify.%:
+	@if ! which $* &>/dev/null; then $(MAKE) tools.install.$*; fi
+
+tools.install: $(addprefix tools.install., $(TOOLS))
+tools.install.%:
+	@echo "===========> Installing $*"
+	@$(MAKE) install.$*
+
+.PHONY: install.golangci-lint
+install.golangci-lint:
+	@$(GO) get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.41.1
+	@golangci-lint completion bash > $(HOME)/.golangci-lint.bash
+	@if ! grep -q .golangci-lint.bash $(HOME)/.bashrc; then echo "source \$$HOME/.golangci-lint.bash" >> $(HOME)/.bashrc; fi
